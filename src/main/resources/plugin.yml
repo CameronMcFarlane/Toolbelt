@@ -1,0 +1,8 @@
+# Copyright (C) 2026 Cameron McFarlane
+name: Toolbelt
+version: 0.1.0
+main: cam.mcfarlane.toolbelt.ToolbeltPlugin
+description: A collection of server enhancement tools
+author: Cameron McFarlane
+website: https://mcfarlane.cam
+api-version: '1.21.11'
