@@ -18,8 +18,8 @@ public class WelcomeListener implements Listener {
 
   @EventHandler
   public void onPlayerJoin(PlayerJoinEvent event) {
-    TextComponent greeting = Component.text("Welcome to the Faffin' About!", Style.style(TextDecoration.BOLD));
-    TextComponent websiteDetails = Component.text("Visit https://mcfarlane.cam for client details.");
+    TextComponent greeting = Component.text("Welcome to Faffin' About!", Style.style(TextDecoration.BOLD));
+    TextComponent websiteDetails = Component.text("Visit https://mcfarlane.cam for client set-up instructions.");
 
     event.getPlayer().sendMessage(greeting);
     event.getPlayer().sendMessage(websiteDetails);
