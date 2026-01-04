@@ -2,25 +2,40 @@
 
 package cam.mcfarlane.toolbelt;
 
-
-import org.bukkit.Bukkit;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import net.kyori.adventure.text.Component;
+import cam.mcfarlane.toolbelt.tools.Tool;
+import cam.mcfarlane.toolbelt.tools.away.AwayTool;
+import cam.mcfarlane.toolbelt.tools.welcome.WelcomeTool;
 
-public class ToolbeltPlugin extends JavaPlugin implements Listener {
+/**
+ * The entry-point for the Toolbelt plugin.
+ */
+public class ToolbeltPlugin extends JavaPlugin {
+
+  // A list of components which add functionality to the plugin
+  private Tool[] m_tools = {
+    new WelcomeTool(),
+    new AwayTool()
+  };
+
+  @Override
+  public void onLoad() {
+    // TODO: Load plugin configuration
+  }
 
   @Override
   public void onEnable() {
-    Bukkit.getPluginManager().registerEvents(this, this);
+    for (Tool tool : m_tools) {
+      tool.init(this);
+    }
   }
 
-  @EventHandler
-  public void onPlayerJoin(PlayerJoinEvent event) {
-    event.getPlayer().sendMessage(Component.text(String.format("HoooOOH YEAH BaaBBAY %s", event.getPlayer().getName())));
+  @Override
+  public void onDisable() {
+    for (Tool tool : m_tools) {
+      tool.shutDown();
+    }
   }
 
 }
