@@ -7,6 +7,7 @@
 
 plugins {
   java
+  id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
 repositories {
@@ -25,18 +26,21 @@ dependencies {
   // This dependency is used by the application
   implementation(libs.guava)
   // Paper API
-  compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+  compileOnly("io.papermc.paper:paper-api:26.3.build.214-stable")
 }
 
 // Apply a specific Java toolchain to ease working on different environments
 java {
   toolchain {
-    languageVersion = JavaLanguageVersion.of(21)
+    languageVersion = JavaLanguageVersion.of(25)
   }
 }
 
 tasks {
   jar {
     archiveFileName.set(project.name + "-bukkit-" + project.version + ".jar")
+  }
+  runServer {
+    minecraftVersion("26.3")
   }
 }

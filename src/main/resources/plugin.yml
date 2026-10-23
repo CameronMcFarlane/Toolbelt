@@ -5,4 +5,4 @@ main: cam.mcfarlane.toolbelt.ToolbeltPlugin
 description: A collection vanilla-friendly server tools
 author: Cameron McFarlane
 website: https://mcfarlane.cam
-api-version: '1.21.11'
+api-version: '26.3'

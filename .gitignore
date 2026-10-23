@@ -1,6 +1,12 @@
-# Ignore Gradle project-specific cache directory
+# Gradle cache
 .gradle
 
-# Ignore Gradle output directories
+# Build output
 build
 bin
+
+# Development server
+run/*
+!run/eula.txt
+!run/server.properties
+!run/ops.json
