@@ -1,5 +1,4 @@
 /* Copyright (C) 2026 Cameron McFarlane */
-
 package cam.mcfarlane.toolbelt.tools.away;
 
 import org.bukkit.event.EventHandler;
@@ -13,8 +12,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
  */
 public class AwayListener implements Listener {
 
-  // Reference back to the parent tool
-  private AwayTool m_tool;
+  AwayTool m_tool;
 
   public AwayListener(AwayTool tool) {
     m_tool = tool;

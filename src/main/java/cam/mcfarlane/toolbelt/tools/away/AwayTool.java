@@ -1,66 +1,97 @@
 /* Copyright (C) 2026 Cameron McFarlane */
-
 package cam.mcfarlane.toolbelt.tools.away;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
+
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.Component;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 import cam.mcfarlane.toolbelt.ToolbeltConfiguration;
+import cam.mcfarlane.toolbelt.ToolbeltPlugin;
 import cam.mcfarlane.toolbelt.tools.Tool;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
+import cam.mcfarlane.toolbelt.tools.roster.RosterTool;
 
 /**
- * A tool which keeps track of how long players have been away.
+ * Keeps track of how long players have been inactive.
  */
-public class AwayTool implements Tool {
+public class AwayTool extends Tool {
 
-  private AwayListener m_listener = new AwayListener(this);
-  private ConcurrentHashMap<UUID, Integer> m_timeAway = new ConcurrentHashMap<>();
-  private ExecutorService m_executor = Executors.newSingleThreadExecutor();
+  /**
+   * Tracks the status of each player, including a timestamp of
+   * when they were last seen and a boolean to determine if they
+   * have already been marked as away.
+   */
+  private class AwayStatus {
+    Instant lastSeen = Instant.now();
+    boolean away = false;
+  }
 
-  // TODO: Change to use system time instead of ticking a value up every second
+  private final int AWAY_CHECK_FREQUENCY_TICKS = 20;
+
+  private ConcurrentHashMap<UUID, AwayStatus> m_awayStatus = new ConcurrentHashMap<>();
+  private BukkitTask m_awayTask;
+
+  public AwayTool(ToolbeltPlugin plugin) {
+    super(plugin);
+  }
 
   @Override
-  public void init(JavaPlugin plugin) {
-    if (!ToolbeltConfiguration.AWAY_ENABLED)
-      return;
+  public void init() {
+    m_listener = new AwayListener(this);
 
-    // Register events
-    Bukkit.getPluginManager().registerEvents(m_listener, plugin);
-
-    // Start thread for ticking away times
-    Runnable timer = () -> {
-      try {
-        while (true) {
-          m_timeAway.forEach((id, awaySecs) -> {
-            boolean currentlyAway = awaySecs >= ToolbeltConfiguration.AWAY_THRESHOLD_SECS;
-            m_timeAway.put(id, ++awaySecs);
-            // If the player wasn't away before but now is, update their status
-            if (!currentlyAway && awaySecs >= ToolbeltConfiguration.AWAY_THRESHOLD_SECS) {
-              updatePlayerStatus(Bukkit.getPlayer(id), true);
-            }
-          });
-          Thread.sleep(1000);
-        }
-      } catch (InterruptedException ex) {
-        return;
-      }
-    };
-    m_executor.submit(timer);
+    m_awayTask = m_plugin.getServer().getScheduler().runTaskTimer(
+      m_plugin,
+      this::checkAway,
+      0,
+      AWAY_CHECK_FREQUENCY_TICKS);
   }
 
   @Override
   public void shutDown() {
     // Shut down the executor and any running threads
-    m_executor.shutdown();
+    m_awayTask.cancel();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return ToolbeltConfiguration.AWAY_ENABLED;
+  }
+
+  /**
+   * Iterates through each of the connected players who aren't away
+   * and updates their status if they
+   */
+  private void checkAway() {
+    m_awayStatus.forEach((id, status) -> {
+      if (!status.away) {
+        Duration duration = Duration.between(status.lastSeen, Instant.now());
+        if (duration.toSeconds() > ToolbeltConfiguration.AWAY_THRESHOLD_SECS) {
+          status.away = true;
+          updatePlayerStatus(Bukkit.getPlayer(id), true);
+        }
+      }
+    });
+  }
+
+  /**
+   * Resets the given player's away time, adding the player to
+   * the map if it doesn't already exist.
+   * @param player The player to reset the away time for.
+   */
+  public void resetAwayTime(Player player) {
+    m_awayStatus.put(player.getUniqueId(), new AwayStatus());
   }
 
   /**
@@ -70,59 +101,35 @@ public class AwayTool implements Tool {
    * @param away whether the player is away or back.
    */
   public void updatePlayerStatus(Player player, boolean away) {
-    String playerName = player.getName();
+    @SuppressWarnings("null")
+    Optional<RosterTool> rosterTool = m_plugin.getTool(RosterTool.class);
+
+    // Construct broadcast message and send to the server
+    Component message = text(player.getName()).decorate(BOLD).color(GRAY);
     if (away) {
-      // Broadcast a message to the server
-      Component broadcastMessage = Component.text(playerName)
-        .decorate(TextDecoration.BOLD)
-        .append(Component.text(" is away.").decoration(TextDecoration.BOLD, false));
-      Bukkit.broadcast(broadcastMessage);
-      // Change the style of the player's name in the player list
-      Component playerListName = player.displayName()
-        .decorate(TextDecoration.ITALIC)
-        .color(NamedTextColor.GRAY);
-      player.playerListName(playerListName);
+      message = message.append(text(" is away.").decoration(BOLD, false));
+      // Change the player's team (if the roster tool is enabled)
+      if (rosterTool.isPresent()) {
+        rosterTool.get().joinTeam(player, RosterTool.TEAM_AWAY);
+      }
     } else {
-      // Broadcast a message to the server
-      Component broadcastMessage = Component.text(playerName)
-        .decorate(TextDecoration.BOLD)
-        .append(Component.text(" is back!").decoration(TextDecoration.BOLD, false));
-      Bukkit.broadcast(broadcastMessage);
-      // Change the style of the player's name in the player list
-      Component playerListName = player.displayName()
-        .decoration(TextDecoration.ITALIC, false)
-        .color(NamedTextColor.WHITE);
-      player.playerListName(playerListName);
+      message = message.append(text(" is back!").decoration(BOLD, false));
+      // Change the player's team (if the roster tool is enabled)
+      if (rosterTool.isPresent()) {
+        rosterTool.get().joinDefaultTeam(player);
+      }
     }
+    playAwaySound(player);
+    Bukkit.broadcast(message);
   }
 
   /**
-   * Check if the given player has been away longer than the configured away time.
+   * Check if the given player has been away longer than the configured time.
    * @param player the player to check.
-   * @return true if the player is AFK.
+   * @return true if the player is away.
    */
   public boolean isPlayerAway(Player player) {
-    Integer awaySecs = m_timeAway.get(player.getUniqueId());
-    if (awaySecs != null && awaySecs >= ToolbeltConfiguration.AWAY_THRESHOLD_SECS)
-      return true;
-    return false;
-  }
-
-  /**
-   * Resets the given player's away time back to 0, adding the player to
-   * the map if it doesn't already exist.
-   * @param player The player to reset the away time for.
-   */
-  public void resetAwayTime(Player player) {
-    m_timeAway.put(player.getUniqueId(), 0);
-  }
-
-  /**
-   * Removes a player from the away list.
-   * @param player The player to remove.
-   */
-  public void removePlayer(Player player) {
-    m_timeAway.remove(player.getUniqueId());
+    return m_awayStatus.get(player.getUniqueId()).away;
   }
 
   /**
@@ -131,7 +138,7 @@ public class AwayTool implements Tool {
    */
   public void sendAwayStatus(Player player) {
     StringBuilder awayList = new StringBuilder();
-    m_timeAway.forEach((id, awaySecs) -> {
+    m_awayStatus.forEach((id, awaySecs) -> {
       String playerName = Bukkit.getPlayer(id).getName();
       if (isPlayerAway(player)) {
         awayList.append(String.format("%s has been away for %d seconds.%n", playerName, awaySecs));
@@ -139,7 +146,24 @@ public class AwayTool implements Tool {
         awayList.append(String.format("%s is not away.%n", playerName));
       }
     });
-    player.sendMessage(Component.text(awayList.toString().trim()));
+    player.sendMessage(Component.text(awayList.toString()));
+  }
+
+  /**
+   * Removes a player from the away list.
+   * @param player The player to remove.
+   */
+  public void removePlayer(Player player) {
+    m_awayStatus.remove(player.getUniqueId());
+  }
+
+  public void playAwaySound(Player player) {
+    // https://minecraft.wiki/w/Sounds.json
+    String option1 = "item.book.page_turn";
+    String option2 = "item.lodestone_compass.lock";
+
+    Sound sound = Sound.sound(Key.key(option1), Sound.Source.PLAYER, 1f, 1f);
+    player.playSound(sound);
   }
 
 }
