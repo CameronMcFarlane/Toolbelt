@@ -9,4 +9,3 @@ bin
 run/*
 !run/eula.txt
 !run/server.properties
-!run/ops.json
