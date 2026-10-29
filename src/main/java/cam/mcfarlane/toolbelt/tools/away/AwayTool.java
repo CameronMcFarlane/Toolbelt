@@ -10,10 +10,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
+
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
@@ -38,6 +41,7 @@ public class AwayTool extends Tool {
     boolean away = false;
   }
 
+  private static final Logger LOG = LoggerFactory.getLogger(AwayTool.class);
   private final int AWAY_CHECK_FREQUENCY_TICKS = 20;
 
   private ConcurrentHashMap<UUID, AwayStatus> m_awayStatus = new ConcurrentHashMap<>();
@@ -49,8 +53,8 @@ public class AwayTool extends Tool {
 
   @Override
   public void init() {
+    LOG.info("Initialising the Away tool...");
     m_listener = new AwayListener(this);
-
     m_awayTask = m_plugin.getServer().getScheduler().runTaskTimer(
       m_plugin,
       this::checkAway,
@@ -101,7 +105,6 @@ public class AwayTool extends Tool {
    * @param away whether the player is away or back.
    */
   public void updatePlayerStatus(Player player, boolean away) {
-    @SuppressWarnings("null")
     Optional<RosterTool> rosterTool = m_plugin.getTool(RosterTool.class);
 
     // Construct broadcast message and send to the server

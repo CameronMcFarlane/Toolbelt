@@ -31,16 +31,23 @@ public class ToolbeltPlugin extends JavaPlugin {
   /*
    * Todo:
    * - Lock dimensions
+   *   - Implement commands
    * - Event calendar
    *   - Hook into other tools, like dimensions
    *   - Play sounds when events start
+   *   - Implement commands
    * - Bulletin
    *   - Server messages
-   *   - Player messages
-   *   - Show messages on screen and in chat
+   *   - Implement commands
+   * - Away
+   *   - Implement commands
+   *   - Fix away/return triggers
+   *     - punching/interacting should count as return trigger
+   *     - being pushed should not count
    * - Chat
    *   - Override the default formatting of chat messages
    *   - Send sounds when a chat message is sent (can be disabled)
+   *   - Implement commands
    */
 
   // A list of components which add functionality to the plugin

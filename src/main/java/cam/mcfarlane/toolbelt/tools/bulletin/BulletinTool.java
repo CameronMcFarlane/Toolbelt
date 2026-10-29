@@ -8,6 +8,8 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
 import org.bukkit.entity.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import cam.mcfarlane.toolbelt.ToolbeltConfiguration;
 import cam.mcfarlane.toolbelt.ToolbeltPlugin;
@@ -19,6 +21,8 @@ import cam.mcfarlane.toolbelt.tools.Tool;
  */
 public class BulletinTool extends Tool {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BulletinTool.class);
+
   public BulletinTool(ToolbeltPlugin plugin) {
     super(plugin);
     m_listener = new BulletinListener(this);
@@ -26,6 +30,7 @@ public class BulletinTool extends Tool {
 
   @Override
   public void init() {
+    LOG.info("Initialising the Bulletin tool...");
     // Nothing to init
   }
 

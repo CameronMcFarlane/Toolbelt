@@ -11,6 +11,8 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.RenderType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
@@ -23,6 +25,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class RosterTool extends Tool {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RosterTool.class);
 
   public static final String TEAM_PLAYER = "toolbelt_player";
   public static final String TEAM_ADMIN = "toolbelt_admin";
@@ -58,6 +62,7 @@ public class RosterTool extends Tool {
 
   @Override
   public void init() {
+    LOG.info("Initialising the Roster tool...");
     m_listener = new RosterListener(this);
     m_scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
 

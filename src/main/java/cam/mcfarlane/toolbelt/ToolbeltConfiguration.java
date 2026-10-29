@@ -4,11 +4,11 @@ package cam.mcfarlane.toolbelt;
 import java.time.LocalDate;
 
 /**
- * Stores configuration properties to be accessed by the entire plugin.
+ * Stores configuration properties to be accessed throughout the plugin.
  */
 public class ToolbeltConfiguration {
 
-  public static String    SERVER_NAME = "Kokiri";
+  public static String    SERVER_NAME = "Coldbrew";
   public static LocalDate SERVER_START_DATE = LocalDate.of(2026, 10, 26);
 
   public static boolean   AWAY_ENABLED = true;
