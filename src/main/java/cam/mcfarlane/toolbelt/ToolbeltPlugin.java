@@ -41,13 +41,12 @@ public class ToolbeltPlugin extends JavaPlugin {
    *   - Implement commands
    * - Away
    *   - Implement commands
-   *   - Fix away/return triggers
-   *     - punching/interacting should count as return trigger
-   *     - being pushed should not count
    * - Chat
    *   - Override the default formatting of chat messages
    *   - Send sounds when a chat message is sent (can be disabled)
    *   - Implement commands
+   * - Notification sounds
+   *   - https://minecraft.wiki/w/Sounds.json
    */
 
   // A list of components which add functionality to the plugin

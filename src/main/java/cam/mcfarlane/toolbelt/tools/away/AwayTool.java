@@ -31,6 +31,14 @@ import cam.mcfarlane.toolbelt.tools.roster.RosterTool;
  */
 public class AwayTool extends Tool {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AwayTool.class);
+
+  private final int AWAY_CHECK_FREQUENCY_TICKS = 20;
+  private final String NOTIFICATION_SOUND = "item.book.page_turn";
+
+  private ConcurrentHashMap<UUID, AwayStatus> m_awayStatus;
+  private BukkitTask m_awayTask;
+
   /**
    * Tracks the status of each player, including a timestamp of
    * when they were last seen and a boolean to determine if they
@@ -41,20 +49,21 @@ public class AwayTool extends Tool {
     boolean away = false;
   }
 
-  private static final Logger LOG = LoggerFactory.getLogger(AwayTool.class);
-  private final int AWAY_CHECK_FREQUENCY_TICKS = 20;
-
-  private ConcurrentHashMap<UUID, AwayStatus> m_awayStatus = new ConcurrentHashMap<>();
-  private BukkitTask m_awayTask;
-
   public AwayTool(ToolbeltPlugin plugin) {
     super(plugin);
+    m_awayStatus = new ConcurrentHashMap<>();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return ToolbeltConfiguration.AWAY_ENABLED;
   }
 
   @Override
   public void init() {
     LOG.info("Initialising the Away tool...");
     m_listener = new AwayListener(this);
+    // Create a scheduled task to continually check for away players
     m_awayTask = m_plugin.getServer().getScheduler().runTaskTimer(
       m_plugin,
       this::checkAway,
@@ -68,14 +77,10 @@ public class AwayTool extends Tool {
     m_awayTask.cancel();
   }
 
-  @Override
-  public boolean isEnabled() {
-    return ToolbeltConfiguration.AWAY_ENABLED;
-  }
-
   /**
    * Iterates through each of the connected players who aren't away
-   * and updates their status if they
+   * and updates their status if their last seen value is greater
+   * than the configured threshold.
    */
   private void checkAway() {
     m_awayStatus.forEach((id, status) -> {
@@ -92,6 +97,7 @@ public class AwayTool extends Tool {
   /**
    * Resets the given player's away time, adding the player to
    * the map if it doesn't already exist.
+   * 
    * @param player The player to reset the away time for.
    */
   public void resetAwayTime(Player player) {
@@ -99,8 +105,18 @@ public class AwayTool extends Tool {
   }
 
   /**
+   * Removes a player from the away list.
+   * 
+   * @param player The player to remove.
+   */
+  public void removePlayer(Player player) {
+    m_awayStatus.remove(player.getUniqueId());
+  }
+
+  /**
    * Updates the away status of the given player with a broadcasted message to the server
    * and their player name in the list changing colour.
+   * 
    * @param player the player to update the status for.
    * @param away whether the player is away or back.
    */
@@ -128,6 +144,7 @@ public class AwayTool extends Tool {
 
   /**
    * Check if the given player has been away longer than the configured time.
+   * 
    * @param player the player to check.
    * @return true if the player is away.
    */
@@ -137,6 +154,7 @@ public class AwayTool extends Tool {
 
   /**
    * Sends a message to the player with a list of connected players and their away status.
+   * 
    * @param player the player to send the message to.
    */
   public void sendAwayStatus(Player player) {
@@ -153,19 +171,12 @@ public class AwayTool extends Tool {
   }
 
   /**
-   * Removes a player from the away list.
-   * @param player The player to remove.
+   * Plays a notification sound when a player changes away status.
+   * 
+   * @param player The player to play the sound for.
    */
-  public void removePlayer(Player player) {
-    m_awayStatus.remove(player.getUniqueId());
-  }
-
   public void playAwaySound(Player player) {
-    // https://minecraft.wiki/w/Sounds.json
-    String option1 = "item.book.page_turn";
-    String option2 = "item.lodestone_compass.lock";
-
-    Sound sound = Sound.sound(Key.key(option1), Sound.Source.PLAYER, 1f, 1f);
+    Sound sound = Sound.sound(Key.key(NOTIFICATION_SOUND), Sound.Source.PLAYER, 1f, 1f);
     player.playSound(sound);
   }
 
