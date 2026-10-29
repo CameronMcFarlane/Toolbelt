@@ -3,8 +3,9 @@ package cam.mcfarlane.toolbelt.tools.away;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInputEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
@@ -22,20 +23,26 @@ public class AwayListener implements Listener {
   public void onPlayerJoin(PlayerJoinEvent event) {
     m_tool.resetAwayTime(event.getPlayer());
   }
-  
-  @EventHandler
-  public void onPlayerMove(PlayerMoveEvent event) {
-    if (event.hasExplicitlyChangedPosition()) {
-      if (m_tool.isPlayerAway(event.getPlayer())) {
-        m_tool.updatePlayerStatus(event.getPlayer(), false);
-      }
-      m_tool.resetAwayTime(event.getPlayer());
-    }
-  }
 
   @EventHandler
   public void onPlayerLeave(PlayerQuitEvent event) {
     m_tool.removePlayer(event.getPlayer());
+  }
+
+  @EventHandler 
+  public void onPlayerInput(PlayerInputEvent event) {
+    if (m_tool.isPlayerAway(event.getPlayer())) {
+      m_tool.updatePlayerStatus(event.getPlayer(), false);
+    }
+    m_tool.resetAwayTime(event.getPlayer());
+  }
+
+  @EventHandler
+  public void onPlayerClick(PlayerInteractEvent event) {
+    if (m_tool.isPlayerAway(event.getPlayer())) {
+      m_tool.updatePlayerStatus(event.getPlayer(), false);
+    }
+    m_tool.resetAwayTime(event.getPlayer());
   }
 
 }
