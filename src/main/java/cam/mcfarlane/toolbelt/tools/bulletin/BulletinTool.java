@@ -8,20 +8,17 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
 
 import org.bukkit.entity.Player;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import cam.mcfarlane.toolbelt.ToolbeltConfiguration;
 import cam.mcfarlane.toolbelt.ToolbeltPlugin;
 import cam.mcfarlane.toolbelt.tools.Tool;
+import cam.mcfarlane.toolbelt.utils.Utilities;
 
 /**
  * A tool which displays a welcome message to the player upon connecting
  * and formats the scoreboard screen.
  */
 public class BulletinTool extends Tool {
-
-  private static final Logger LOG = LoggerFactory.getLogger(BulletinTool.class);
 
   public BulletinTool(ToolbeltPlugin plugin) {
     super(plugin);
@@ -30,7 +27,7 @@ public class BulletinTool extends Tool {
 
   @Override
   public void init() {
-    LOG.info("Initialising the Bulletin tool...");
+    ToolbeltPlugin.LOGGER.info("Initialising the Bulletin tool...");
     // Nothing to init
   }
 
@@ -46,7 +43,7 @@ public class BulletinTool extends Tool {
 
   public void showTitle(Player player) {
     TextComponent title = text(ToolbeltConfiguration.SERVER_NAME).color(GREEN).decorate(BOLD);
-    TextComponent subtitle = text("Day %d".formatted(m_plugin.getDaysSinceServerStart()));
+    TextComponent subtitle = text("Day %d".formatted(Utilities.getDaysSinceServerStart()));
 
     player.showTitle(Title.title(title, subtitle));
   }
