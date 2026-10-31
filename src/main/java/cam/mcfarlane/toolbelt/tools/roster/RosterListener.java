@@ -6,6 +6,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import cam.mcfarlane.toolbelt.tools.away.AwayEvent;
+
 public class RosterListener implements Listener {
 
   private RosterTool m_tool;
@@ -34,6 +36,21 @@ public class RosterListener implements Listener {
 
     // Override the default disconnect message
     event.quitMessage(m_tool.getRandomQuitPhrase(event.getPlayer().getName()));
+  }
+
+  /**
+   * Listens for when a player's away status changes and updates
+   * their team membership to/from the away team.
+   * 
+   * @param event The {@link AwayEvent} metadata.
+   */
+  @EventHandler
+  public void onPlayerAway(AwayEvent event) {
+    if (event.isPlayerAway()) {
+      m_tool.joinTeam(event.getPlayer(), RosterTool.TEAM_AWAY);
+    } else {
+      m_tool.joinDefaultTeam(event.getPlayer());
+    }
   }
   
 }

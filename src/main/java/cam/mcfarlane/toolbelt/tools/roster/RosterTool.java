@@ -11,8 +11,6 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.RenderType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
@@ -21,18 +19,19 @@ import static net.kyori.adventure.text.format.TextDecoration.*;
 import cam.mcfarlane.toolbelt.ToolbeltConfiguration;
 import cam.mcfarlane.toolbelt.ToolbeltPlugin;
 import cam.mcfarlane.toolbelt.tools.Tool;
+import cam.mcfarlane.toolbelt.utils.Utilities;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class RosterTool extends Tool {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RosterTool.class);
-
-  public static final String TEAM_PLAYER = "toolbelt_player";
-  public static final String TEAM_ADMIN = "toolbelt_admin";
-  public static final String TEAM_AWAY = "toolbelt_away";
-
-  public static final String OBJECTIVE_HEALTH = "toolbelth_health";
+  // Team identifiers
+  protected static final String TEAM_PLAYER = "toolbelt_player";
+  protected static final String TEAM_ADMIN = "toolbelt_admin";
+  protected static final String TEAM_AWAY = "toolbelt_away";
+  
+  // Objective identifiers
+  protected static final String OBJECTIVE_HEALTH = "toolbelth_health";
 
   Scoreboard m_scoreboard;
 
@@ -62,7 +61,7 @@ public class RosterTool extends Tool {
 
   @Override
   public void init() {
-    LOG.info("Initialising the Roster tool...");
+    ToolbeltPlugin.LOGGER.info("Initialising the Roster tool...");
     m_listener = new RosterListener(this);
     m_scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
 
@@ -171,7 +170,7 @@ public class RosterTool extends Tool {
       .color(GREEN)
       .appendSpace()
       .append(
-        text("• Day %d".formatted(m_plugin.getDaysSinceServerStart()))
+        text("• Day %d".formatted(Utilities.getDaysSinceServerStart()))
         .color(WHITE)
         .decoration(BOLD, false))
       .appendNewline();

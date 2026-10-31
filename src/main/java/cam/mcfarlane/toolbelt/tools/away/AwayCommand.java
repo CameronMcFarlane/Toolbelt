@@ -6,33 +6,65 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-
+import net.kyori.adventure.text.Component;
 import cam.mcfarlane.toolbelt.tools.ToolCommand;
 
 /**
  * A command for managing away status and checking the status of others.
  */
 public class AwayCommand extends ToolCommand {
+
+  AwayTool m_tool;
+
+  public AwayCommand(AwayTool tool) {
+    m_tool = tool;
+  }
   
   @Override
   public LiteralCommandNode<CommandSourceStack> create() {
-    return Commands.literal("ass")
-    .then(Commands.literal("eat")
-    .executes(context -> {
-      CommandSender sender = context.getSource().getSender();
-      Entity executor = context.getSource().getExecutor();
-      if (executor instanceof Player player) {
-        player.sendHurtAnimation(30f);
+    return Commands.literal("away")
+      .executes(context -> executeAway(context))
+      .then(Commands.literal("list")
+        .executes(context -> executeList(context)))
+      .build();
+  }
+
+  /**
+   * Sets the executor's status to away.
+   * 
+   * @param context metadata of the executed command.
+   * @return 1 if the command execution was successful.
+   */
+  private int executeAway(CommandContext<CommandSourceStack> context) {
+    CommandSender sender = context.getSource().getSender();
+    Entity executor = context.getSource().getExecutor();
+    if (executor instanceof Player player) {
+      if (m_tool.isPlayerAway(player)) {
+        sender.sendMessage(Component.text("You're already away, you turnip."));
       } else {
-        sender.sendPlainMessage("you don't have a mouth. unable to eat ass :(");
+        m_tool.setPlayerAway(player);
       }
-      return Command.SINGLE_SUCCESS;
-    }))
-    .build();
+    } else {
+      sender.sendMessage(Component.text("You are omnipresent."));
+    }
+    return Command.SINGLE_SUCCESS;
+  }
+
+  /**
+   * Provides the away status of each connected player.
+   * 
+   * @param context metadata of the executed command.
+   * @return 1 if the command execution was successful.
+   */
+  private int executeList(CommandContext<CommandSourceStack> context) {
+    CommandSender sender = context.getSource().getSender();
+    m_tool.sendAwayStatus(sender);
+    return Command.SINGLE_SUCCESS;
   }
 
 }

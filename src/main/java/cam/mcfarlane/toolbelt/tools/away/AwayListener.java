@@ -49,10 +49,7 @@ public class AwayListener implements Listener {
    */
   @EventHandler 
   public void onPlayerInput(PlayerInputEvent event) {
-    if (m_tool.isPlayerAway(event.getPlayer())) {
-      m_tool.updatePlayerStatus(event.getPlayer(), false);
-    }
-    m_tool.resetAwayTime(event.getPlayer());
+    m_tool.playerMoved(event.getPlayer());
   }
 
   /**
@@ -64,10 +61,7 @@ public class AwayListener implements Listener {
    */
   @EventHandler
   public void onPlayerClick(PlayerInteractEvent event) {
-    if (m_tool.isPlayerAway(event.getPlayer())) {
-      m_tool.updatePlayerStatus(event.getPlayer(), false);
-    }
-    m_tool.resetAwayTime(event.getPlayer());
+    m_tool.playerMoved(event.getPlayer());
   }
 
 }

@@ -11,7 +11,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 public abstract class ToolCommand {
 
   /**
-   * Builds and returns a command structure.
+   * Builds and returns a command structure to interact with this tool.
    * @return the parent node containing the command tree.
    */
   public abstract LiteralCommandNode<CommandSourceStack> create();

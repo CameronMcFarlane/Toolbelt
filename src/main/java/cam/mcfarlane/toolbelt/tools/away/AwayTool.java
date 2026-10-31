@@ -3,19 +3,17 @@ package cam.mcfarlane.toolbelt.tools.away;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent.Builder;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
@@ -24,19 +22,17 @@ import static net.kyori.adventure.text.format.TextDecoration.*;
 import cam.mcfarlane.toolbelt.ToolbeltConfiguration;
 import cam.mcfarlane.toolbelt.ToolbeltPlugin;
 import cam.mcfarlane.toolbelt.tools.Tool;
-import cam.mcfarlane.toolbelt.tools.roster.RosterTool;
+import cam.mcfarlane.toolbelt.utils.Utilities;
 
 /**
  * Keeps track of how long players have been inactive.
  */
 public class AwayTool extends Tool {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AwayTool.class);
-
   private final int AWAY_CHECK_FREQUENCY_TICKS = 20;
   private final String NOTIFICATION_SOUND = "item.book.page_turn";
 
-  private ConcurrentHashMap<UUID, AwayStatus> m_awayStatus;
+  private ConcurrentHashMap<UUID, Status> m_playerStatus;
   private BukkitTask m_awayTask;
 
   /**
@@ -44,14 +40,15 @@ public class AwayTool extends Tool {
    * when they were last seen and a boolean to determine if they
    * have already been marked as away.
    */
-  private class AwayStatus {
+  private class Status {
     Instant lastSeen = Instant.now();
     boolean away = false;
   }
 
   public AwayTool(ToolbeltPlugin plugin) {
     super(plugin);
-    m_awayStatus = new ConcurrentHashMap<>();
+    m_playerStatus = new ConcurrentHashMap<>();
+    m_command = new AwayCommand(this);
   }
 
   @Override
@@ -61,8 +58,9 @@ public class AwayTool extends Tool {
 
   @Override
   public void init() {
-    LOG.info("Initialising the Away tool...");
+    ToolbeltPlugin.LOGGER.info("Initialising the Away tool...");
     m_listener = new AwayListener(this);
+
     // Create a scheduled task to continually check for away players
     m_awayTask = m_plugin.getServer().getScheduler().runTaskTimer(
       m_plugin,
@@ -83,63 +81,38 @@ public class AwayTool extends Tool {
    * than the configured threshold.
    */
   private void checkAway() {
-    m_awayStatus.forEach((id, status) -> {
+    m_playerStatus.forEach((id, status) -> {
       if (!status.away) {
         Duration duration = Duration.between(status.lastSeen, Instant.now());
         if (duration.toSeconds() > ToolbeltConfiguration.AWAY_THRESHOLD_SECS) {
-          status.away = true;
-          updatePlayerStatus(Bukkit.getPlayer(id), true);
+          setPlayerAway(Bukkit.getPlayer(id));
         }
       }
     });
   }
 
   /**
-   * Resets the given player's away time, adding the player to
-   * the map if it doesn't already exist.
+   * Plays a notification sound when a player changes away status.
    * 
-   * @param player The player to reset the away time for.
+   * @param player the player to play the sound for.
    */
-  public void resetAwayTime(Player player) {
-    m_awayStatus.put(player.getUniqueId(), new AwayStatus());
+  private void playAwaySound(Player player) {
+    Sound sound = Sound.sound(
+      Key.key(NOTIFICATION_SOUND),
+      Sound.Source.PLAYER,
+      1f,
+      1f);
+    player.playSound(sound);
   }
 
   /**
-   * Removes a player from the away list.
+   * Sets the given player's status to away.
    * 
-   * @param player The player to remove.
+   * @param player the player to set the status for.
    */
-  public void removePlayer(Player player) {
-    m_awayStatus.remove(player.getUniqueId());
-  }
-
-  /**
-   * Updates the away status of the given player with a broadcasted message to the server
-   * and their player name in the list changing colour.
-   * 
-   * @param player the player to update the status for.
-   * @param away whether the player is away or back.
-   */
-  public void updatePlayerStatus(Player player, boolean away) {
-    Optional<RosterTool> rosterTool = m_plugin.getTool(RosterTool.class);
-
-    // Construct broadcast message and send to the server
-    Component message = text(player.getName()).decorate(BOLD).color(GRAY);
-    if (away) {
-      message = message.append(text(" is away.").decoration(BOLD, false));
-      // Change the player's team (if the roster tool is enabled)
-      if (rosterTool.isPresent()) {
-        rosterTool.get().joinTeam(player, RosterTool.TEAM_AWAY);
-      }
-    } else {
-      message = message.append(text(" is back!").decoration(BOLD, false));
-      // Change the player's team (if the roster tool is enabled)
-      if (rosterTool.isPresent()) {
-        rosterTool.get().joinDefaultTeam(player);
-      }
-    }
-    playAwaySound(player);
-    Bukkit.broadcast(message);
+  protected void setPlayerAway(Player player) {
+    m_playerStatus.get(player.getUniqueId()).away = true;
+    updatePlayerStatus(player, true);
   }
 
   /**
@@ -148,36 +121,84 @@ public class AwayTool extends Tool {
    * @param player the player to check.
    * @return true if the player is away.
    */
-  public boolean isPlayerAway(Player player) {
-    return m_awayStatus.get(player.getUniqueId()).away;
+  protected boolean isPlayerAway(Player player) {
+    return m_playerStatus.get(player.getUniqueId()).away;
   }
 
   /**
-   * Sends a message to the player with a list of connected players and their away status.
+   * Updates the away status of the given player, sending a broadcast message,
+   * playing a sound, and calling the {@link AwayEvent} for listeners to do
+   * additional actions.
    * 
-   * @param player the player to send the message to.
+   * @param player the player to update the status for.
+   * @param away whether the player is away or back.
    */
-  public void sendAwayStatus(Player player) {
-    StringBuilder awayList = new StringBuilder();
-    m_awayStatus.forEach((id, awaySecs) -> {
-      String playerName = Bukkit.getPlayer(id).getName();
-      if (isPlayerAway(player)) {
-        awayList.append(String.format("%s has been away for %d seconds.%n", playerName, awaySecs));
+  protected void updatePlayerStatus(Player player, boolean away) {
+    Builder message = text().content(player.getName()).decorate(BOLD).color(GRAY);
+    if (away) {
+      message.append(text(" is away.").decoration(BOLD, false));
+    } else {
+      message.append(text(" is back!").decoration(BOLD, false));
+    }
+    Bukkit.broadcast(message.build());
+    playAwaySound(player);
+    new AwayEvent(player, away).callEvent();
+  }
+
+  /**
+   * Resets the given player's last seen time and, if their current status
+   * is away, resets their status to no longer be away.
+   * 
+   * @param player the player which moved.
+   */
+  protected void playerMoved(Player player) {
+    if (isPlayerAway(player)) {
+      updatePlayerStatus(player, false);
+    }
+    resetAwayTime(player);
+  }
+
+  /**
+   * Resets the given player's away time, adding the player to
+   * the map if they don't already exist.
+   * 
+   * @param player the player to reset the away time for.
+   */
+  protected void resetAwayTime(Player player) {
+    m_playerStatus.put(player.getUniqueId(), new Status());
+  }
+
+  /**
+   * Removes a player from the away list.
+   * 
+   * @param player the player to remove.
+   */
+  protected void removePlayer(Player player) {
+    m_playerStatus.remove(player.getUniqueId());
+  }
+
+  /**
+   * Sends a message to the given audience with a list of connected
+   * players and their away status.
+   * 
+   * @param audience the audience to send the list of away players.
+   */
+  protected void sendAwayStatus(Audience audience) {
+    if (m_playerStatus.isEmpty()) {
+      audience.sendMessage(text("Where is everyone?"));
+      return;
+    }
+    m_playerStatus.forEach((id, status) -> {
+      Builder message = text();
+      String name = Bukkit.getPlayer(id).getName();
+      message.append(text(name).decorate(BOLD)).appendSpace();
+      if (status.away) {
+        message.append(text("was last seen at %s.".formatted(Utilities.formatTime(status.lastSeen))));
       } else {
-        awayList.append(String.format("%s is not away.%n", playerName));
+        message.append(text("is active."));
       }
+      audience.sendMessage(message.build());
     });
-    player.sendMessage(Component.text(awayList.toString()));
-  }
-
-  /**
-   * Plays a notification sound when a player changes away status.
-   * 
-   * @param player The player to play the sound for.
-   */
-  public void playAwaySound(Player player) {
-    Sound sound = Sound.sound(Key.key(NOTIFICATION_SOUND), Sound.Source.PLAYER, 1f, 1f);
-    player.playSound(sound);
   }
 
 }

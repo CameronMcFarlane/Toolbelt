@@ -12,7 +12,7 @@ public class ToolbeltConfiguration {
   public static LocalDate SERVER_START_DATE = LocalDate.of(2026, 10, 26);
 
   public static boolean   AWAY_ENABLED = true;
-  public static int       AWAY_THRESHOLD_SECS = 10;
+  public static int       AWAY_THRESHOLD_SECS = 120;
 
   public static boolean   BULLETIN_ENABLED = true;
 
