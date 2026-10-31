@@ -24,18 +24,12 @@ public class RosterListener implements Listener {
 
     // Add player to their default team
     m_tool.joinDefaultTeam(event.getPlayer());
-    
-    // Override the default join message
-    event.joinMessage(m_tool.getRandomJoinPhrase(event.getPlayer().getName()));
   }
 
   @EventHandler
   public void onPlayerLeave(PlayerQuitEvent event) {
     // Remove the player from their team
     m_tool.leaveTeam(event.getPlayer());
-
-    // Override the default disconnect message
-    event.quitMessage(m_tool.getRandomQuitPhrase(event.getPlayer().getName()));
   }
 
   /**

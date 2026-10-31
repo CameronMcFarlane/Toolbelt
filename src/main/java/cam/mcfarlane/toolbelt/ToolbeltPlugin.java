@@ -17,6 +17,7 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import cam.mcfarlane.toolbelt.tools.Tool;
 import cam.mcfarlane.toolbelt.tools.away.AwayTool;
 import cam.mcfarlane.toolbelt.tools.bulletin.BulletinTool;
+import cam.mcfarlane.toolbelt.tools.chat.ChatTool;
 import cam.mcfarlane.toolbelt.tools.dimension.DimensionTool;
 import cam.mcfarlane.toolbelt.tools.roster.RosterTool;
 
@@ -30,10 +31,11 @@ public class ToolbeltPlugin extends JavaPlugin {
 
   // A list of components which add functionality to the plugin
   private final Tool[] m_toolbelt = {
-    new AwayTool(this),
-    new BulletinTool(this),
-    new DimensionTool(this),
-    new RosterTool(this)
+    new AwayTool(),
+    new BulletinTool(),
+    new ChatTool(),
+    new DimensionTool(),
+    new RosterTool()
   };
 
   @Override

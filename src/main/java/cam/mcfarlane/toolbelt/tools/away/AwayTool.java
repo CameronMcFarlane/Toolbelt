@@ -45,8 +45,7 @@ public class AwayTool extends Tool {
     boolean away = false;
   }
 
-  public AwayTool(ToolbeltPlugin plugin) {
-    super(plugin);
+  public AwayTool() {
     m_playerStatus = new ConcurrentHashMap<>();
     m_command = new AwayCommand(this);
   }

@@ -15,12 +15,6 @@ public abstract class Tool {
   protected Listener m_listener;
   protected ToolCommand m_command;
 
-  public Tool() {}
-
-  public Tool(ToolbeltPlugin plugin) {
-    m_plugin = plugin;
-  }
-  
   /**
    * Initialisation logic for the tool.
    */

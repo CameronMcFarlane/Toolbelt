@@ -15,13 +15,12 @@ import org.bukkit.scoreboard.Team;
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.*;
+import net.kyori.adventure.text.Component;
 
 import cam.mcfarlane.toolbelt.ToolbeltConfiguration;
 import cam.mcfarlane.toolbelt.ToolbeltPlugin;
 import cam.mcfarlane.toolbelt.tools.Tool;
 import cam.mcfarlane.toolbelt.utils.Utilities;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 public class RosterTool extends Tool {
 
@@ -40,24 +39,6 @@ public class RosterTool extends Tool {
     TEAM_ADMIN,
     TEAM_AWAY
   };
-
-  private String[] m_joinPhrases = {
-    "has joined!",
-    "has graced us with their presence!",
-    "has succumbed to the craft!",
-  };
-
-  private String[] m_quitPhrases = {
-    "has left.",
-    "has disconnected.",
-    "has abandoned us all.",
-    "has gone to get milk.",
-    "will come back. They promised."
-  };
-
-  public RosterTool(ToolbeltPlugin plugin) {
-    super(plugin);
-  }
 
   @Override
   public void init() {
@@ -144,24 +125,6 @@ public class RosterTool extends Tool {
         break;
     }
     return team;
-  }
-
-  public Component getRandomJoinPhrase(String playerName) {
-    String phrase = m_joinPhrases[(int) Math.round(Math.random() * (m_joinPhrases.length - 1))];
-    return text(playerName)
-      .decorate(BOLD)
-      .color(NamedTextColor.GOLD)
-      .appendSpace()
-      .append(text(phrase).decoration(BOLD, false));
-  }
-
-  public Component getRandomQuitPhrase(String playerName) {
-    String phrase = m_quitPhrases[(int) Math.round(Math.random() * (m_quitPhrases.length - 1))];
-    return text(playerName)
-      .decorate(BOLD)
-      .color(NamedTextColor.GOLD)
-      .appendSpace()
-      .append(text(phrase).decoration(BOLD, false));
   }
 
   public Component getPlayerListHeader() {

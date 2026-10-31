@@ -20,8 +20,7 @@ import cam.mcfarlane.toolbelt.utils.Utilities;
  */
 public class BulletinTool extends Tool {
 
-  public BulletinTool(ToolbeltPlugin plugin) {
-    super(plugin);
+  public BulletinTool() {
     m_listener = new BulletinListener(this);
   }
 

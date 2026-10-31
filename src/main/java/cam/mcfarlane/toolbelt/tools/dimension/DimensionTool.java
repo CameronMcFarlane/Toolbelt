@@ -9,10 +9,6 @@ import cam.mcfarlane.toolbelt.tools.Tool;
  */
 public class DimensionTool extends Tool {
 
-  public DimensionTool(ToolbeltPlugin plugin) {
-    super(plugin);
-  }
-
   @Override
   public void init() {
     ToolbeltPlugin.LOGGER.info("Initialising the Dimension tool...");
